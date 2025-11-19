@@ -1,4 +1,4 @@
-import { Agent, InitConfig, ConsoleLogger, LogLevel, ConnectionsModule } from '@credo-ts/core';
+import { Agent, InitConfig, ConsoleLogger, LogLevel, ConnectionsModule, ConnectionRecord,OutOfBandInvitation,HttpOutboundTransport, WsOutboundTransport} from '@credo-ts/core';
 import { agentDependencies } from '@credo-ts/react-native';
 import { AskarModule } from '@credo-ts/askar';
 import { ariesAskar } from '@hyperledger/aries-askar-react-native';
@@ -35,6 +35,7 @@ class MobileBobAgent {
           key: 'mobilebobagentkey00000000000000000',
         },
         logger: new ConsoleLogger(LogLevel.info),
+        endpoints:['http://192.168.1.4:3003']
       };
 
       console.log(' Creating agent configuration...');
@@ -49,6 +50,10 @@ class MobileBobAgent {
           }),
         },
       });
+
+      console.log('Registering outbound transports...');
+      this.agent.registerOutboundTransport(new HttpOutboundTransport());
+      this.agent.registerOutboundTransport(new WsOutboundTransport());
 
       console.log(' Initializing agent...');
       await this.agent.initialize();
@@ -84,6 +89,66 @@ class MobileBobAgent {
       walletId: 'mobile-bob-wallet'
     };
   }
+
+  async recieveInvitation(invitationUrl: string): Promise<{connectionId: string; outofBandId: string}>{
+      try{
+
+        console.log('Recieving invitation..');
+
+        if(!this.agent || !this.isInitialized){
+            throw new Error('Agent not initialized');
+        }
+
+        const fixedInvitationUrl = invitationUrl.replace(
+          'http://localhost:3002', 
+          'http://192.168.1.4:3002' 
+        );
+
+         console.log('Fixed invitation URL:', fixedInvitationUrl);
+        
+        const invitation= OutOfBandInvitation.fromUrl(invitationUrl); //parse invitation url
+
+        const {outOfBandRecord,connectionRecord}= await this.agent.oob.receiveInvitation(invitation); //recieving invitation
+
+        if (!connectionRecord) {
+          throw new Error('Failed to create connection from invitation');
+        }
+
+        const connectedConnection = await this.agent.connections.returnWhenIsConnected(connectionRecord.id);
+        console.log('Connection established:',connectedConnection.id );
+        
+        return{
+            connectionId: connectedConnection.id,
+            outofBandId:outOfBandRecord.id
+        }
+
+
+      }catch(error){
+          console.error('Failed to receive invitation:', error);
+          throw error;
+          
+      }
+
+  }
+
+  async getConnections(): Promise<ConnectionRecord[]> {
+    if (!this.agent || !this.isInitialized) {
+      throw new Error('Agent not initialized');
+    }
+    
+    return await this.agent.connections.getAll();
+  }
+
+  async getConnection(connectionId:string): Promise<ConnectionRecord>{
+      if(!this.agent||!this.isInitialized){
+        throw new Error('Agent not initialized');
+      }
+
+      return await this.agent.connections.getById(connectionId);
+
+  }
+
+
 }
 
 export const mobileBobAgent = new MobileBobAgent();

@@ -11,6 +11,7 @@ const config = {
       buffer: require.resolve('buffer'),
     },
   },
+
   transformer: {
     getTransformOptions: async () => ({
       transform: {
@@ -19,6 +20,19 @@ const config = {
       },
     }),
   },
+
+  server: {
+      port: 8081,
+      enhanceMiddleware: (middleware)=>{
+            return (req,res,next)=>{
+
+              res.setHeader('Access-Control-Allow-Origin','*');
+              return middleware(req,res,next);
+
+            }
+      }
+  }
+
 };
 
 module.exports = mergeConfig(defaultConfig, config);

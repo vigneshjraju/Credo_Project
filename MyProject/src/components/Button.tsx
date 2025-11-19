@@ -4,12 +4,10 @@ import { TouchableOpacity,Text,ActivityIndicator,StyleSheet,ViewStyle,TextStyle,
 interface ButtonProps {
     title:string;
     onPress:()=> void;
-    variant?: 'primary' | 'secondary'| 'danger';
+    variant?: 'primary' | 'secondary';
     loading?: boolean;
     disabled?:boolean;
     style?: ViewStyle;
-    textStyle?: TextStyle;
-    size?: 'sm' | 'md' | 'lg';
 }
 
 export const Button: React.FC<ButtonProps> =({
@@ -19,61 +17,49 @@ export const Button: React.FC<ButtonProps> =({
     loading = false,
     disabled = false,
     style,
-    textStyle,
-    size = 'md',
 }) =>{
 
     const getButtonStyle =(): ViewStyle =>{
 
         const baseStyle: ViewStyle = {
-            paddingVertical: size === 'sm' ? 8: size === 'lg' ? 16:12,
-            paddingHorizontal: size === 'sm' ? 16 : size === 'lg' ? 32 : 24,
-            borderRadius: 8,
-            alignItems: 'center',
+                padding: 15,
+                borderRadius: 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'row',
 
         };
 
-        switch (variant) {
-            case 'primary':
+            if (variant === 'primary') {
                 return {
-                ...baseStyle,
-                backgroundColor: '#4f46e5',
+                    ...baseStyle,
+                    backgroundColor: disabled ? '#cccccc' : '#007AFF',
                 };
-            case 'secondary':
+            } else {
                 return {
-                ...baseStyle,
-                backgroundColor: '#f3f4f6',
-                borderWidth: 1,
-                borderColor: '#d1d5db',
+                        ...baseStyle,
+                        backgroundColor: '#f0f0f0',
+                        borderWidth: 1,
+                        borderColor: '#cccccc',
                 };
-            case 'danger':
-                return {
-                ...baseStyle,
-                backgroundColor: '#dc2626',
-                };
-            default:
-                return baseStyle;
-        }    
+            }    
 
     }
 
     const getTextStyle = (): TextStyle => {
-        const baseStyle: TextStyle = {
-        fontSize: size === 'sm' ? 14 : size === 'lg' ? 18 : 16,
-        fontWeight: '600',
-        };
-
-        if (variant === 'primary' || variant === 'danger') {
-        return {
-            ...baseStyle,
-            color: '#ffffff',
-        };
-        } else {
-        return {
-            ...baseStyle,
-            color: '#374151',
-        };
-        }
+            if (variant === 'primary') {
+                return {
+                    color: '#ffffff',
+                    fontSize: 16,
+                    fontWeight: '600',
+                };
+            } else {
+                return {
+                    color: '#333333',
+                    fontSize: 16,
+                    fontWeight: '600',
+                };
+            }
     };
 
     return(
@@ -82,18 +68,19 @@ export const Button: React.FC<ButtonProps> =({
             style={[getButtonStyle(),style]}
             onPress={onPress}
             disabled={disabled || loading}
-            activeOpacity={0.8}
         
         >
             {loading && (
                 <ActivityIndicator 
-                size="small" 
-                color={variant === 'secondary' ? '#4f46e5' : '#ffffff'} 
-                style={styles.loader} 
+                    size="small" 
+                    color={variant === 'secondary' ? '#4f46e5' : '#ffffff'} 
+                    style={styles.loader} 
                 />
             )}
 
-         <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+            <Text style={getTextStyle()}>
+                {title}
+            </Text>
         </TouchableOpacity>    
         
     );

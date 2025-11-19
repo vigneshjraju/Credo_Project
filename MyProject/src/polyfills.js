@@ -49,4 +49,4 @@ if (typeof crypto === 'undefined') {
   };
 }
 
-console.log('✅ Polyfills loaded successfully');
+console.log('Polyfills loaded successfully');

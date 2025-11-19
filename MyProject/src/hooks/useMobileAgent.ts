@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { mobileBobAgent } from "../services/mobileAgent";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ConnectionRecord } from "@credo-ts/core";
 
 
 export interface AgentState {
@@ -11,12 +12,23 @@ export interface AgentState {
     initializing:boolean
 }
 
+export interface ConnectionState {
+    connections: ConnectionRecord[];
+    loading:boolean;
+
+}
+
 
 export const useMobileAgent =()=>{
 
     const [agentState,setAgentState] = useState<AgentState>({
         isInitialized: false,
         initializing:false,
+    })
+
+    const [connectionState,setConnectionState]= useState<ConnectionState>({
+        connections: [],
+        loading: false
     })
 
     useEffect(()=>{
@@ -67,6 +79,41 @@ export const useMobileAgent =()=>{
             console.error('Error saving agent state:', error);
             
         }
+    }
+
+    const loadConnections = async () => {
+        try{
+
+            setConnectionState (prev =>({...prev, loading:true}));
+            const connections= await mobileBobAgent.getConnections();
+            setConnectionState({connections,loading:false});
+
+        }catch(error){
+            console.error('Error loading connections',error);
+            setConnectionState (prev => ({ ...prev, loading:false}))
+        }
+    }
+
+    const recieveInvitation = async (invitationUrl:string) => {
+        try{
+
+            setConnectionState(prev => ({...prev, loading:true}));
+
+            const result = await mobileBobAgent.recieveInvitation(invitationUrl);
+
+            Alert.alert('Success','Connection established successfully');
+
+            await loadConnections();
+            return result;
+
+        } catch(error:any){
+            console.error('Failed to receive invitation:',error);
+            Alert.alert('Error', `Failed to establish connection: ${error.message}`);
+            setConnectionState(prev => ({ ...prev, loading: false }));
+            throw error;
+        }
+
+
     }
 
     const initializeAgent = async () =>{
@@ -122,8 +169,11 @@ export const useMobileAgent =()=>{
 
     return{
         agentState,
+        connectionState,
         initializeAgent,
-        resetAgent
+        resetAgent,
+        recieveInvitation,
+        loadConnections
     };
 
 
